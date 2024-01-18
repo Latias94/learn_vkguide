@@ -30,9 +30,12 @@ xmake && xmake r # Build all and run the default target
 ```
 
 ### Works with IDE
+
+Run commands to generate project files each time after file changes.
+
 ```shell
 xmake project -k cmakelists # Generate a cmake project for IDEs. e.g. CLion
-xmake project -k compile_commands # or if you prefer compile_commands.json
+xmake project -k compile_commands # or if you prefer compile_commands.json e.g. vscode
 xmake project -k vsxmake -m "debug,release"
 # xmake project -k makefile
 # xmake project -k xcode
