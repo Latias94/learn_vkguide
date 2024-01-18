@@ -1,0 +1,11 @@
+add_requires("vulkansdk")
+add_requires("libsdl", "vulkan-memory-allocator", "vk-bootstrap", "glm", "fmt", "stb", "imgui")
+
+target("engine")
+    set_kind("static")
+    add_files("src/**.cpp")
+    add_includedirs("src", { public = true })
+    add_includedirs("$(projectdir)/vendor", { public = true })
+    add_defines("UNICODE", "_UNICODE", "NOMINMAX")
+    add_packages("vulkan-memory-allocator", "libsdl", "vk-bootstrap", "glm", "fmt", {public = true})
+    add_packages("vulkansdk", {public = true})
