@@ -190,8 +190,9 @@ void VulkanEngine::init_background_pipelines()
     vkDestroyShaderModule(_device, skyShader, nullptr);
     _mainDeletionQueue.push_function([&]() {
         vkDestroyPipelineLayout(_device, _gradientPipelineLayout, nullptr);
-        vkDestroyPipeline(_device, sky.pipeline, nullptr);
-        vkDestroyPipeline(_device, gradient.pipeline, nullptr);
+        for (auto& effect : backgroundEffects) {
+            vkDestroyPipeline(_device, effect.pipeline, nullptr);
+        }
     });
 }
 
