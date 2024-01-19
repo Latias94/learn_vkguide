@@ -7,3 +7,4 @@ set_exceptions("cxx")
 
 includes("app/xmake.lua")
 includes("engine/xmake.lua")
+includes("vendor/**/xmake.lua")
