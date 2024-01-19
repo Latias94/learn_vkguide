@@ -78,8 +78,10 @@ private:
     void destroy_swapchain();
 
     void draw_background(VkCommandBuffer cmd);
+    void draw_geometry(VkCommandBuffer cmd);
 
     void init_pipelines();
+    void init_triangle_pipeline();
     void init_background_pipelines();
     void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
     void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
@@ -123,6 +125,9 @@ public:
     VkDescriptorSetLayout _drawImageDescriptorLayout;
 
     VkPipelineLayout _gradientPipelineLayout;
+
+    VkPipelineLayout _trianglePipelineLayout;
+    VkPipeline       _trianglePipeline;
 
     // immediate submit structures (ImGui)
     VkFence         _immFence;
