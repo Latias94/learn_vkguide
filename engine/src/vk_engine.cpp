@@ -77,6 +77,7 @@ void VulkanEngine::cleanup()
         vkb::destroy_debug_utils_messenger(_instance, _debug_messenger);
         vkDestroyInstance(_instance, nullptr);
         SDL_DestroyWindow(_window);
+        SDL_Quit();
     }
 }
 
@@ -482,6 +483,8 @@ void VulkanEngine::run()
         ImGui_ImplSDL2_NewFrame(_window);
         ImGui::NewFrame();
 
+        // ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
         if (ImGui::Begin("background")) {
 
             ComputeEffect& selected = backgroundEffects[currentBackgroundEffect];
@@ -740,7 +743,24 @@ void VulkanEngine::init_imgui()
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;    // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // Enable Docking
+    // io.ConfigFlags |=
+    //     ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
+
+    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsLight();
+
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look
+    // identical to regular ones.
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        style.WindowRounding              = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
 
     // this initializes imgui for SDL
     ImGui_ImplSDL2_InitForVulkan(_window);
@@ -767,6 +787,8 @@ void VulkanEngine::init_imgui()
     // add the destroy the imgui created structures
     _mainDeletionQueue.push_function([=]() {
         ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
         vkDestroyDescriptorPool(_device, imguiPool, nullptr);
     });
 }
@@ -819,4 +841,12 @@ void VulkanEngine::draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView)
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
 
     vkCmdEndRendering(cmd);
+
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    // Update and Render additional Platform Windows
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
 }
