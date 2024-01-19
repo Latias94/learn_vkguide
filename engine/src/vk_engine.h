@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk_descriptors.h"
+#include "vk_loader.h"
 #include "vk_types.h"
 
 struct ComputePushConstants
@@ -66,6 +67,8 @@ public:
     // run main loop
     void run();
 
+    GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
+
 private:
     void init_vulkan();
     void init_swapchain();
@@ -91,8 +94,6 @@ private:
     AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage,
                                   VmaMemoryUsage memoryUsage);
     void            destroy_buffer(const AllocatedBuffer& buffer);
-
-    GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 
 public:
     bool _isInitialized{false};
@@ -125,6 +126,7 @@ public:
     VmaAllocator _allocator;
 
     AllocatedImage _drawImage;
+    AllocatedImage _depthImage;
     VkExtent2D     _drawExtent;
 
     DescriptorAllocator globalDescriptorAllocator;
@@ -154,4 +156,6 @@ private:
 
     std::vector<ComputeEffect> backgroundEffects;
     int                        currentBackgroundEffect{0};
+
+    std::vector<std::shared_ptr<MeshAsset>> testMeshes;
 };

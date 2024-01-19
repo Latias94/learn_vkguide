@@ -13,6 +13,7 @@
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
+#include <glm/gtx/transform.hpp>
 #include <thread>
 
 #include "imgui.h"
@@ -62,6 +63,10 @@ void VulkanEngine::cleanup()
         vkDeviceWaitIdle(_device);
 
         _mainDeletionQueue.flush();
+
+        for (FrameData framedata : _frames) {
+            framedata._deletionQueue.flush();
+        }
 
         for (int i = 0; i < FRAME_OVERLAP; i++) {
             vkDestroyCommandPool(_device, _frames[i]._commandPool, nullptr);
@@ -119,12 +124,13 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd)
     VkRenderingAttachmentInfo colorAttachment =
         vkinit::attachment_info(_drawImage.imageView, nullptr, VK_IMAGE_LAYOUT_GENERAL);
 
-    VkRenderingInfo renderInfo = vkinit::rendering_info(_drawExtent, &colorAttachment, nullptr);
+    VkRenderingAttachmentInfo depthAttachment = vkinit::depth_attachment_info(
+        _depthImage.imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+    VkRenderingInfo renderInfo =
+        vkinit::rendering_info(_drawExtent, &colorAttachment, &depthAttachment);
     vkCmdBeginRendering(cmd, &renderInfo);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _trianglePipeline);
-
-    // set dynamic viewport and scissor
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _meshPipeline);
     VkViewport viewport = {};
     viewport.x          = 0;
     viewport.y          = 0;
@@ -142,15 +148,25 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd)
     scissor.extent.height = _drawExtent.height;
 
     vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-    // launch a draw command to draw 3 vertices
-    vkCmdDraw(cmd, 3, 1, 0, 0);
-
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _meshPipeline);
-
     GPUDrawPushConstants push_constants;
-    push_constants.worldMatrix  = glm::mat4{1.f};
-    push_constants.vertexBuffer = rectangle.vertexBufferAddress;
+
+    glm::mat4 view = glm::translate(glm::vec3{0, 0, -5});
+    // camera projection
+    // For the projection matrix, we are doing a trick here. Note that we are sending 10000 to the
+    // “near” and 0.1 to the “far”. We will be reversing the depth, so that depth 1 is the near
+    // plane, and depth 0 the far plane. This is a technique that greatly increases the quality of
+    // depth testing.
+    // Depth Reversal, far place has higher precision
+    glm::mat4 projection = glm::perspective(
+        glm::radians(70.f), (float)_drawExtent.width / (float)_drawExtent.height, 10000.f, 0.1f);
+
+    // invert the Y direction on projection matrix so that we are more similar
+    // to opengl and gltf axis
+    projection[1][1] *= -1;
+
+    push_constants.worldMatrix = projection * view;
+
+    push_constants.vertexBuffer = testMeshes[2]->meshBuffers.vertexBufferAddress;
 
     vkCmdPushConstants(cmd,
                        _meshPipelineLayout,
@@ -158,9 +174,11 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd)
                        0,
                        sizeof(GPUDrawPushConstants),
                        &push_constants);
-    vkCmdBindIndexBuffer(cmd, rectangle.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(
+        cmd, testMeshes[2]->meshBuffers.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-    vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
+    vkCmdDrawIndexed(
+        cmd, testMeshes[2]->surfaces[0].count, 1, testMeshes[2]->surfaces[0].startIndex, 0, 0);
 
     vkCmdEndRendering(cmd);
 }
@@ -168,7 +186,7 @@ void VulkanEngine::draw_geometry(VkCommandBuffer cmd)
 void VulkanEngine::init_pipelines()
 {
     init_background_pipelines();
-    init_triangle_pipeline();
+    // init_triangle_pipeline();
     init_mesh_pipeline();
 }
 
@@ -220,7 +238,7 @@ void VulkanEngine::init_triangle_pipeline()
 
     // connect the image format we will draw into, from draw image
     pipelineBuilder.set_color_attachment_format(_drawImage.imageFormat);
-    pipelineBuilder.set_depth_format(VK_FORMAT_UNDEFINED);
+    pipelineBuilder.set_depth_format(_depthImage.imageFormat);
 
     // finally build the pipeline
     _trianglePipeline = pipelineBuilder.build_pipeline(_device);
@@ -364,11 +382,13 @@ void VulkanEngine::init_mesh_pipeline()
     // no blending
     pipelineBuilder.disable_blending();
 
-    pipelineBuilder.disable_depthtest();
+    // pipelineBuilder.disable_depthtest();
+    // Depth Reversal
+    pipelineBuilder.enable_depthtest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
 
     // connect the image format we will draw into, from draw image
     pipelineBuilder.set_color_attachment_format(_drawImage.imageFormat);
-    pipelineBuilder.set_depth_format(VK_FORMAT_UNDEFINED);
+    pipelineBuilder.set_depth_format(_depthImage.imageFormat);
 
     // finally build the pipeline
     _meshPipeline = pipelineBuilder.build_pipeline(_device);
@@ -454,6 +474,11 @@ void VulkanEngine::draw()
 
     vkutil::transition_image(
         cmd, _drawImage.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    vkutil::transition_image(cmd,
+                             _depthImage.image,
+                             VK_IMAGE_LAYOUT_UNDEFINED,
+                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
     draw_geometry(cmd);
 
@@ -698,10 +723,34 @@ void VulkanEngine::init_swapchain()
 
     VK_CHECK(vkCreateImageView(_device, &rview_info, nullptr, &_drawImage.imageView));
 
-    // add to deletion queues
+    _depthImage.imageFormat = VK_FORMAT_D32_SFLOAT;
+    _depthImage.imageExtent = drawImageExtent;
+    VkImageUsageFlags depthImageUsages{};
+    depthImageUsages |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+    VkImageCreateInfo dimg_info =
+        vkinit::image_create_info(_depthImage.imageFormat, depthImageUsages, drawImageExtent);
+
+    // allocate and create the image
+    vmaCreateImage(_allocator,
+                   &dimg_info,
+                   &rimg_allocinfo,
+                   &_depthImage.image,
+                   &_depthImage.allocation,
+                   nullptr);
+
+    // build a image-view for the draw image to use for rendering
+    VkImageViewCreateInfo dview_info = vkinit::imageview_create_info(
+        _depthImage.imageFormat, _depthImage.image, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+    VK_CHECK(vkCreateImageView(_device, &dview_info, nullptr, &_depthImage.imageView));
+
     _mainDeletionQueue.push_function([=]() {
         vkDestroyImageView(_device, _drawImage.imageView, nullptr);
         vmaDestroyImage(_allocator, _drawImage.image, _drawImage.allocation);
+
+        vkDestroyImageView(_device, _depthImage.imageView, nullptr);
+        vmaDestroyImage(_allocator, _depthImage.image, _depthImage.allocation);
     });
 }
 
@@ -881,29 +930,14 @@ void VulkanEngine::init_imgui()
 
 void VulkanEngine::init_default_data()
 {
-    std::array<Vertex, 4> rect_vertices;
+    testMeshes = loadGltfMeshes(this, "assets/basicmesh.glb").value();
 
-    rect_vertices[0].position = {0.5, -0.5, 0};
-    rect_vertices[1].position = {0.5, 0.5, 0};
-    rect_vertices[2].position = {-0.5, -0.5, 0};
-    rect_vertices[3].position = {-0.5, 0.5, 0};
-
-    rect_vertices[0].color = {0, 0, 0, 1};
-    rect_vertices[1].color = {0.5, 0.5, 0.5, 1};
-    rect_vertices[2].color = {1, 0, 0, 1};
-    rect_vertices[3].color = {0, 1, 0, 1};
-
-    std::array<uint32_t, 6> rect_indices;
-
-    rect_indices[0] = 0;
-    rect_indices[1] = 1;
-    rect_indices[2] = 2;
-
-    rect_indices[3] = 2;
-    rect_indices[4] = 1;
-    rect_indices[5] = 3;
-
-    rectangle = uploadMesh(rect_indices, rect_vertices);
+    _mainDeletionQueue.push_function([&]() {
+        for (auto&& meshAsset : testMeshes) {
+            destroy_buffer(meshAsset->meshBuffers.indexBuffer);
+            destroy_buffer(meshAsset->meshBuffers.vertexBuffer);
+        }
+    });
 }
 
 void VulkanEngine::create_swapchain(uint32_t width, uint32_t height)
@@ -1049,11 +1083,6 @@ GPUMeshBuffers VulkanEngine::uploadMesh(std::span<uint32_t> indices, std::span<V
     });
 
     destroy_buffer(staging);
-
-    _mainDeletionQueue.push_function([&]() {
-        destroy_buffer(rectangle.indexBuffer);
-        destroy_buffer(rectangle.vertexBuffer);
-    });
 
     return newSurface;
 }
