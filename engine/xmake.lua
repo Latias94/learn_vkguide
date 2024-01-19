@@ -1,9 +1,11 @@
 add_requires("vulkansdk")
 add_requires("libsdl", "vulkan-memory-allocator", "vk-bootstrap", "glm", "fmt", "stb", "imgui")
+add_rules('utils.glsl2spv', {outputdir = "$(buildir)/$(plat)/$(arch)/$(mode)//shaders"})
 
 target("engine")
     set_kind("static")
     add_files("src/**.cpp")
+    add_files("$(projectdir)/shaders/*.comp")
     add_includedirs("src", { public = true })
     add_includedirs("$(projectdir)/vendor", { public = true })
     add_defines("UNICODE", "_UNICODE", "NOMINMAX")
