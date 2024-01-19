@@ -1,6 +1,6 @@
 add_requires("vulkansdk")
 add_requires("libsdl", "vulkan-memory-allocator", "vk-bootstrap", "glm", "fmt", "stb", "imgui")
-add_rules('utils.glsl2spv', {outputdir = "$(buildir)/$(plat)/$(arch)/$(mode)//shaders"})
+add_rules('utils.glsl2spv', {outputdir = "$(buildir)/$(plat)/$(arch)/$(mode)/shaders"})
 
 target("engine")
     set_kind("static")
