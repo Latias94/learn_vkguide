@@ -1,5 +1,5 @@
 add_requires("vulkansdk")
-add_requires("libsdl", "vulkan-memory-allocator", "vk-bootstrap", "glm", "fmt", "stb", "imgui")
+add_requires("libsdl", "vulkan-memory-allocator", "vk-bootstrap", "glm", "fmt", "stb", "imgui v1.90-docking")
 add_rules('utils.glsl2spv', {outputdir = "$(buildir)/$(plat)/$(arch)/$(mode)/shaders"})
 
 target("engine")
@@ -11,3 +11,6 @@ target("engine")
     add_defines("UNICODE", "_UNICODE", "NOMINMAX")
     add_packages("vulkan-memory-allocator", "libsdl", "vk-bootstrap", "glm", "fmt", {public = true})
     add_packages("vulkansdk", {public = true})
+    add_packages("imgui", {public = true})
+    add_files("$(projectdir)/vendor/imgui/**.cpp")
+    add_includedirs("$(projectdir)/vendor/imgui/backends", { public = true })

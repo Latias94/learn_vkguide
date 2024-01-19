@@ -285,45 +285,86 @@ VkSubmitInfo2 vkinit::submit_info(VkCommandBufferSubmitInfo* cmd,
     return info;
 }
 
-VkImageCreateInfo vkinit::image_create_info(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent)
+VkImageCreateInfo vkinit::image_create_info(VkFormat format, VkImageUsageFlags usageFlags,
+                                            VkExtent3D extent)
 {
     VkImageCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.pNext = nullptr;
+    info.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext             = nullptr;
 
     info.imageType = VK_IMAGE_TYPE_2D;
 
     info.format = format;
     info.extent = extent;
 
-    info.mipLevels = 1;
+    info.mipLevels   = 1;
     info.arrayLayers = 1;
 
-    //for MSAA. we will not be using it by default, so default it to 1 sample per pixel.
+    // for MSAA. we will not be using it by default, so default it to 1 sample per pixel.
     info.samples = VK_SAMPLE_COUNT_1_BIT;
 
-    //optimal tiling, which means the image is stored on the best gpu format
+    // optimal tiling, which means the image is stored on the best gpu format
     info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    info.usage = usageFlags;
+    info.usage  = usageFlags;
 
     return info;
 }
 
-VkImageViewCreateInfo vkinit::imageview_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags)
+VkImageViewCreateInfo vkinit::imageview_create_info(VkFormat format, VkImage image,
+                                                    VkImageAspectFlags aspectFlags)
 {
     // build a image-view for the depth image to use for rendering
     VkImageViewCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    info.pNext = nullptr;
+    info.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    info.pNext                 = nullptr;
 
-    info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    info.image = image;
-    info.format = format;
-    info.subresourceRange.baseMipLevel = 0;
-    info.subresourceRange.levelCount = 1;
+    info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    info.image                           = image;
+    info.format                          = format;
+    info.subresourceRange.baseMipLevel   = 0;
+    info.subresourceRange.levelCount     = 1;
     info.subresourceRange.baseArrayLayer = 0;
-    info.subresourceRange.layerCount = 1;
-    info.subresourceRange.aspectMask = aspectFlags;
+    info.subresourceRange.layerCount     = 1;
+    info.subresourceRange.aspectMask     = aspectFlags;
 
     return info;
+}
+
+VkRenderingAttachmentInfo vkinit::attachment_info(
+    VkImageView view, VkClearValue* clear,
+    VkImageLayout layout /*= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL*/)
+{
+    VkRenderingAttachmentInfo colorAttachment{};
+    colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    colorAttachment.pNext = nullptr;
+
+    colorAttachment.imageView   = view;
+    colorAttachment.imageLayout = layout;
+    colorAttachment.loadOp      = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+    colorAttachment.storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
+    if (clear) {
+        colorAttachment.clearValue = *clear;
+    }
+
+    return colorAttachment;
+}
+
+
+
+VkRenderingInfo vkinit::rendering_info(VkExtent2D                 renderExtent,
+                                       VkRenderingAttachmentInfo* colorAttachment,
+                                       VkRenderingAttachmentInfo* depthAttachment)
+{
+    VkRenderingInfo renderInfo{};
+    renderInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+    renderInfo.pNext = nullptr;
+
+    renderInfo.renderArea           = VkRect2D{VkOffset2D{0, 0}, renderExtent};
+    renderInfo.layerCount           = 1;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments    = colorAttachment;
+    renderInfo.pDepthAttachment     = depthAttachment;
+    renderInfo.pStencilAttachment   = nullptr;
+
+    return renderInfo;
 }

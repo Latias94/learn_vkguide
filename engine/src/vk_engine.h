@@ -54,6 +54,7 @@ private:
     void init_commands();
     void init_sync_structures();
     void init_descriptors();
+    void init_imgui();
 
     void create_swapchain(uint32_t width, uint32_t height);
     void destroy_swapchain();
@@ -62,6 +63,8 @@ private:
 
     void init_pipelines();
     void init_background_pipelines();
+    void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
+    void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
 
 public:
     bool _isInitialized{false};
@@ -101,8 +104,13 @@ public:
     VkDescriptorSet       _drawImageDescriptors;
     VkDescriptorSetLayout _drawImageDescriptorLayout;
 
-    VkPipeline _gradientPipeline;
+    VkPipeline       _gradientPipeline;
     VkPipelineLayout _gradientPipelineLayout;
+
+    // immediate submit structures (ImGui)
+    VkFence         _immFence;
+    VkCommandBuffer _immCommandBuffer;
+    VkCommandPool   _immCommandPool;
 
     bool stop_rendering{false};
 
