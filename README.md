@@ -12,7 +12,7 @@ Install [Vulkan SDK](https://vulkan.lunarg.com/) and [XMake](https://xmake.io/#/
 # Project configuration:
 # `-c`: Clean configuration
 # `-a`: Architecture [x86_64|i386|arm64 ...]
-# `-m`: Mode [debug|releasedbg|release]
+# `-m`: Mode [debug|release]
 xmake f -c -a x64 -m debug
 ```
 
