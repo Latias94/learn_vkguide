@@ -73,6 +73,7 @@ private:
     void init_sync_structures();
     void init_descriptors();
     void init_imgui();
+    void init_default_data();
 
     void create_swapchain(uint32_t width, uint32_t height);
     void destroy_swapchain();
@@ -83,8 +84,15 @@ private:
     void init_pipelines();
     void init_triangle_pipeline();
     void init_background_pipelines();
+    void init_mesh_pipeline();
     void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
     void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
+
+    AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage,
+                                  VmaMemoryUsage memoryUsage);
+    void            destroy_buffer(const AllocatedBuffer& buffer);
+
+    GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 
 public:
     bool _isInitialized{false};
@@ -133,6 +141,11 @@ public:
     VkFence         _immFence;
     VkCommandBuffer _immCommandBuffer;
     VkCommandPool   _immCommandPool;
+
+    VkPipelineLayout _meshPipelineLayout;
+    VkPipeline       _meshPipeline;
+
+    GPUMeshBuffers rectangle;
 
     bool stop_rendering{false};
 
