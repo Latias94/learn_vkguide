@@ -3,6 +3,24 @@
 #include "vk_descriptors.h"
 #include "vk_types.h"
 
+struct ComputePushConstants
+{
+    glm::vec4 data1;
+    glm::vec4 data2;
+    glm::vec4 data3;
+    glm::vec4 data4;
+};
+
+struct ComputeEffect
+{
+    const char* name;
+
+    VkPipeline       pipeline;
+    VkPipelineLayout layout;
+
+    ComputePushConstants data;
+};
+
 struct DeletionQueue
 {
     std::deque<std::function<void()>> deletors;
@@ -104,7 +122,6 @@ public:
     VkDescriptorSet       _drawImageDescriptors;
     VkDescriptorSetLayout _drawImageDescriptorLayout;
 
-    VkPipeline       _gradientPipeline;
     VkPipelineLayout _gradientPipelineLayout;
 
     // immediate submit structures (ImGui)
@@ -116,4 +133,7 @@ public:
 
 private:
     DeletionQueue _mainDeletionQueue;
+
+    std::vector<ComputeEffect> backgroundEffects;
+    int                        currentBackgroundEffect{0};
 };
