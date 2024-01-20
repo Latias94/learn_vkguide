@@ -85,7 +85,6 @@ private:
     void draw_geometry(VkCommandBuffer cmd);
 
     void init_pipelines();
-    void init_triangle_pipeline();
     void init_background_pipelines();
     void init_mesh_pipeline();
     void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
@@ -135,9 +134,6 @@ public:
     VkDescriptorSetLayout _drawImageDescriptorLayout;
 
     VkPipelineLayout _gradientPipelineLayout;
-
-    VkPipelineLayout _trianglePipelineLayout;
-    VkPipeline       _trianglePipeline;
 
     // immediate submit structures (ImGui)
     VkFence         _immFence;
