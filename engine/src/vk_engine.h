@@ -32,6 +32,44 @@ struct ComputeEffect
     ComputePushConstants data;
 };
 
+enum class MaterialPass : uint8_t
+{
+    MainColor,
+    Transparent,
+    Other
+};
+
+struct MaterialPipeline
+{
+    VkPipeline       pipeline;
+    VkPipelineLayout layout;
+};
+
+struct MaterialInstance
+{
+    MaterialPipeline* pipeline;
+    VkDescriptorSet   materialSet;
+    MaterialPass      passType;
+};
+
+struct RenderObject
+{
+    uint32_t indexCount;
+    uint32_t firstIndex;
+    VkBuffer indexBuffer;
+
+    MaterialInstance* material;
+
+    glm::mat4       transform;
+    VkDeviceAddress vertexBufferAddress;
+};
+
+struct DrawContext
+{
+    std::vector<RenderObject> OpaqueSurfaces;
+    std::vector<RenderObject> TransparentSurfaces;
+};
+
 struct DeletionQueue
 {
     std::deque<std::function<void()>> deletors;

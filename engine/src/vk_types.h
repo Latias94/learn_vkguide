@@ -69,3 +69,10 @@ struct GPUDrawPushConstants
     glm::mat4       worldMatrix;
     VkDeviceAddress vertexBuffer;
 };
+
+struct DrawContext;
+
+class IRenderable
+{
+    virtual void Draw(const glm::mat4& topMatrix, DrawContext& ctx) = 0;
+};
