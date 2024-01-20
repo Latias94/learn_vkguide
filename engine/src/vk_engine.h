@@ -106,6 +106,12 @@ private:
                                   VmaMemoryUsage memoryUsage);
     void            destroy_buffer(const AllocatedBuffer& buffer);
 
+    AllocatedImage create_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage,
+                                bool mipmapped = false);
+    AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
+                                VkImageUsageFlags usage, bool mipmapped = false);
+    void           destroy_image(const AllocatedImage& img);
+
 public:
     bool _isInitialized{false};
     int  _frameNumber{0};
@@ -161,6 +167,16 @@ public:
     GPUSceneData sceneData;
 
     VkDescriptorSetLayout _gpuSceneDataDescriptorLayout;
+
+    AllocatedImage _whiteImage;
+    AllocatedImage _blackImage;
+    AllocatedImage _greyImage;
+    AllocatedImage _errorCheckerboardImage;
+
+    VkSampler _defaultSamplerLinear;
+    VkSampler _defaultSamplerNearest;
+
+    VkDescriptorSetLayout _singleImageDescriptorLayout;
 
     bool freeze_rendering{false};
     bool resize_requested{false};
