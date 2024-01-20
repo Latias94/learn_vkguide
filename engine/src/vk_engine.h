@@ -80,6 +80,7 @@ private:
 
     void create_swapchain(uint32_t width, uint32_t height);
     void destroy_swapchain();
+    void resize_swapchain();
 
     void draw_background(VkCommandBuffer cmd);
     void draw_geometry(VkCommandBuffer cmd);
@@ -127,6 +128,7 @@ public:
     AllocatedImage _drawImage;
     AllocatedImage _depthImage;
     VkExtent2D     _drawExtent;
+    float          renderScale = 1.f;
 
     DescriptorAllocator globalDescriptorAllocator;
 
@@ -145,7 +147,8 @@ public:
 
     GPUMeshBuffers rectangle;
 
-    bool stop_rendering{false};
+    bool freeze_rendering{false};
+    bool resize_requested{false};
 
 private:
     DeletionQueue _mainDeletionQueue;

@@ -19,13 +19,13 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 
-#define VK_CHECK(x)                                                     \
-    do {                                                                \
-        VkResult err = x;                                               \
-        if (err) {                                                      \
-            std::cout << "Detected Vulkan error: " << err << std::endl; \
-            abort();                                                    \
-        }                                                               \
+#define VK_CHECK(x)                                                                      \
+    do {                                                                                 \
+        VkResult err = x;                                                                \
+        if (err) {                                                                       \
+            std::cout << "Detected Vulkan error: " << string_VkResult(err) << std::endl; \
+            abort();                                                                     \
+        }                                                                                \
     } while (0)
 
 struct AllocatedImage
