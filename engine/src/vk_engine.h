@@ -4,6 +4,16 @@
 #include "vk_loader.h"
 #include "vk_types.h"
 
+struct GPUSceneData
+{
+    glm::mat4 view;
+    glm::mat4 proj;
+    glm::mat4 viewproj;
+    glm::vec4 ambientColor;
+    glm::vec4 sunlightDirection;   // w for sun power
+    glm::vec4 sunlightColor;
+};
+
 struct ComputePushConstants
 {
     glm::vec4 data1;
@@ -47,7 +57,8 @@ struct FrameData
     VkSemaphore _swapchainSemaphore, _renderSemaphore;
     VkFence     _renderFence;
 
-    DeletionQueue _deletionQueue;
+    DeletionQueue               _deletionQueue;
+    DescriptorAllocatorGrowable _frameDescriptors;
 };
 
 constexpr unsigned int FRAME_OVERLAP = 2;
@@ -146,6 +157,10 @@ public:
     VkPipeline       _meshPipeline;
 
     GPUMeshBuffers rectangle;
+
+    GPUSceneData sceneData;
+
+    VkDescriptorSetLayout _gpuSceneDataDescriptorLayout;
 
     bool freeze_rendering{false};
     bool resize_requested{false};
