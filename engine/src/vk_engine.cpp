@@ -1240,6 +1240,10 @@ void VulkanEngine::update_scene()
     // to opengl and gltf axis
     sceneData.proj[1][1] *= -1;
     sceneData.viewproj = sceneData.proj * sceneData.view;
+    // some default lighting parameters
+    sceneData.ambientColor      = glm::vec4(.1f);
+    sceneData.sunlightColor     = glm::vec4(1.f);
+    sceneData.sunlightDirection = glm::vec4(0, 1, 0.5, 1.f);
 
     loadedScenes["structure"]->Draw(glm::mat4{1.f}, mainDrawContext);
 }
