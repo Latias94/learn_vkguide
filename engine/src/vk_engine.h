@@ -142,6 +142,16 @@ public:
 
     GPUMeshBuffers uploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 
+    AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage,
+                                  VmaMemoryUsage memoryUsage);
+    void            destroy_buffer(const AllocatedBuffer& buffer);
+
+    AllocatedImage create_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage,
+                                bool mipmapped = false);
+    AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
+                                VkImageUsageFlags usage, bool mipmapped = false);
+    void           destroy_image(const AllocatedImage& img);
+
 private:
     void init_vulkan();
     void init_swapchain();
@@ -163,16 +173,6 @@ private:
     void init_mesh_pipeline();
     void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
     void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
-
-    AllocatedBuffer create_buffer(size_t allocSize, VkBufferUsageFlags usage,
-                                  VmaMemoryUsage memoryUsage);
-    void            destroy_buffer(const AllocatedBuffer& buffer);
-
-    AllocatedImage create_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage,
-                                bool mipmapped = false);
-    AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
-                                VkImageUsageFlags usage, bool mipmapped = false);
-    void           destroy_image(const AllocatedImage& img);
 
     void update_scene();
 
@@ -247,7 +247,7 @@ public:
 
     DrawContext mainDrawContext;
 
-    std::unordered_map<std::string, std::shared_ptr<Node>> loadedNodes;
+    std::unordered_map<std::string, std::shared_ptr<LoadedGLTF>> loadedScenes;
 
     bool freeze_rendering{false};
     bool resize_requested{false};

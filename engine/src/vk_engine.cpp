@@ -56,10 +56,17 @@ void VulkanEngine::init()
     _isInitialized = true;
 
     mainCamera.velocity = glm::vec3(0.f);
-    mainCamera.position = glm::vec3(0, 0, 5);
+    mainCamera.position = glm::vec3(30.f, -00.f, -085.f);
 
     mainCamera.pitch = 0;
     mainCamera.yaw   = 0;
+
+    std::string structurePath = {"assets/structure.glb"};
+    auto        structureFile = loadGltf(this, structurePath);
+
+    assert(structureFile.has_value());
+
+    loadedScenes["structure"] = *structureFile;
 }
 
 void VulkanEngine::cleanup()
@@ -67,6 +74,8 @@ void VulkanEngine::cleanup()
     if (_isInitialized) {
         // make sure the gpu has stopped doing its things
         vkDeviceWaitIdle(_device);
+
+        loadedScenes.clear();
 
         for (FrameData framedata : _frames) {
             framedata._deletionQueue.flush();
@@ -973,15 +982,6 @@ void VulkanEngine::init_default_data()
         destroy_buffer(rectangle.vertexBuffer);
     });
 
-    testMeshes = loadGltfMeshes(this, "assets/basicmesh.glb").value();
-
-    _mainDeletionQueue.push_function([&]() {
-        for (auto&& meshAsset : testMeshes) {
-            destroy_buffer(meshAsset->meshBuffers.indexBuffer);
-            destroy_buffer(meshAsset->meshBuffers.vertexBuffer);
-        }
-    });
-
     // 3 default textures, white, grey, black. 1 pixel each
     uint32_t white = 0xFFFFFFFF;
     _whiteImage    = create_image(
@@ -1025,47 +1025,6 @@ void VulkanEngine::init_default_data()
         vkDestroySampler(_device, _defaultSamplerNearest, nullptr);
         vkDestroySampler(_device, _defaultSamplerLinear, nullptr);
     });
-
-    GLTFMetallic_Roughness::MaterialResources materialResources;
-    // default the material textures
-    materialResources.colorImage        = _whiteImage;
-    materialResources.colorSampler      = _defaultSamplerLinear;
-    materialResources.metalRoughImage   = _whiteImage;
-    materialResources.metalRoughSampler = _defaultSamplerLinear;
-
-    // set the uniform buffer for the material data
-    AllocatedBuffer materialConstants =
-        create_buffer(sizeof(GLTFMetallic_Roughness::MaterialConstants),
-                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                      VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-    // write the buffer
-    GLTFMetallic_Roughness::MaterialConstants* sceneUniformData =
-        (GLTFMetallic_Roughness::MaterialConstants*)materialConstants.allocation->GetMappedData();
-    sceneUniformData->colorFactors        = glm::vec4{1, 1, 1, 1};
-    sceneUniformData->metal_rough_factors = glm::vec4{1, 0.5, 0, 0};
-
-    _mainDeletionQueue.push_function([=, this]() { destroy_buffer(materialConstants); });
-
-    materialResources.dataBuffer       = materialConstants.buffer;
-    materialResources.dataBufferOffset = 0;
-
-    defaultData = metalRoughMaterial.write_material(
-        _device, MaterialPass::MainColor, materialResources, globalDescriptorAllocator);
-
-    for (auto& m : testMeshes) {
-        std::shared_ptr<MeshNode> newNode = std::make_shared<MeshNode>();
-        newNode->mesh                     = m;
-
-        newNode->localTransform = glm::mat4{1.f};
-        newNode->worldTransform = glm::mat4{1.f};
-
-        for (auto& s : newNode->mesh->surfaces) {
-            s.material = std::make_shared<GLTFMaterial>(defaultData);
-        }
-
-        loadedNodes[m->name] = std::move(newNode);
-    }
 }
 
 void VulkanEngine::create_swapchain(uint32_t width, uint32_t height)
@@ -1331,15 +1290,6 @@ void VulkanEngine::update_scene()
 
     mainDrawContext.OpaqueSurfaces.clear();
 
-    // loadedNodes["Suzanne"]->Draw(glm::mat4{1.f}, mainDrawContext);
-
-    for (int x = -3; x < 3; x++) {
-        glm::mat4 scale       = glm::scale(glm::vec3{0.2});
-        glm::mat4 translation = glm::translate(glm::vec3{x, 1, 0});
-
-        loadedNodes["Cube"]->Draw(translation * scale, mainDrawContext);
-    }
-
     sceneData.view = mainCamera.getViewMatrix();
     // camera projection
     sceneData.proj = glm::perspective(glm::radians(70.f),
@@ -1352,10 +1302,7 @@ void VulkanEngine::update_scene()
     sceneData.proj[1][1] *= -1;
     sceneData.viewproj = sceneData.proj * sceneData.view;
 
-    // some default lighting parameters
-    sceneData.ambientColor      = glm::vec4(.1f);
-    sceneData.sunlightColor     = glm::vec4(1.f);
-    sceneData.sunlightDirection = glm::vec4(0, 1, 0.5, 1.f);
+    loadedScenes["structure"]->Draw(glm::mat4{1.f}, mainDrawContext);
 }
 
 void GLTFMetallic_Roughness::build_pipelines(VulkanEngine* engine)
