@@ -5,6 +5,15 @@
 #include "vk_loader.h"
 #include "vk_types.h"
 
+struct EngineStats
+{
+    float frametime;
+    int   triangle_count;
+    int   drawcall_count;
+    float scene_update_time;
+    float mesh_draw_time;
+};
+
 struct GPUSceneData
 {
     glm::mat4 view;
@@ -256,5 +265,6 @@ private:
 
     std::vector<std::shared_ptr<MeshAsset>> testMeshes;
 
-    Camera mainCamera;
+    Camera      mainCamera;
+    EngineStats stats;
 };
