@@ -170,7 +170,6 @@ private:
 
     void init_pipelines();
     void init_background_pipelines();
-    void init_mesh_pipeline();
     void immediate_submit(std::function<void(VkCommandBuffer cmd)>&& function);
     void draw_imgui(VkCommandBuffer cmd, VkImageView targetImageView);
 
@@ -222,9 +221,6 @@ public:
     VkFence         _immFence;
     VkCommandBuffer _immCommandBuffer;
     VkCommandPool   _immCommandPool;
-
-    VkPipelineLayout _meshPipelineLayout;
-    VkPipeline       _meshPipeline;
 
     GPUMeshBuffers rectangle;
 
