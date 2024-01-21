@@ -32,26 +32,6 @@ struct ComputeEffect
     ComputePushConstants data;
 };
 
-enum class MaterialPass : uint8_t
-{
-    MainColor,
-    Transparent,
-    Other
-};
-
-struct MaterialPipeline
-{
-    VkPipeline       pipeline;
-    VkPipelineLayout layout;
-};
-
-struct MaterialInstance
-{
-    MaterialPipeline* pipeline;
-    VkDescriptorSet   materialSet;
-    MaterialPass      passType;
-};
-
 struct RenderObject
 {
     uint32_t indexCount;
@@ -135,6 +115,13 @@ struct GLTFMetallic_Roughness
                                     DescriptorAllocatorGrowable& descriptorAllocator);
 };
 
+struct MeshNode : public Node
+{
+    std::shared_ptr<MeshAsset> mesh;
+
+    virtual void Draw(const glm::mat4& topMatrix, DrawContext& ctx) override;
+};
+
 constexpr unsigned int FRAME_OVERLAP = 2;
 
 class VulkanEngine
@@ -185,6 +172,8 @@ private:
     AllocatedImage create_image(void* data, VkExtent3D size, VkFormat format,
                                 VkImageUsageFlags usage, bool mipmapped = false);
     void           destroy_image(const AllocatedImage& img);
+
+    void update_scene();
 
 public:
     bool _isInitialized{false};
@@ -254,6 +243,10 @@ public:
 
     MaterialInstance       defaultData;
     GLTFMetallic_Roughness metalRoughMaterial;
+
+    DrawContext mainDrawContext;
+
+    std::unordered_map<std::string, std::shared_ptr<Node>> loadedNodes;
 
     bool freeze_rendering{false};
     bool resize_requested{false};
