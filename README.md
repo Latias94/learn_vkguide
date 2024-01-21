@@ -2,6 +2,8 @@
 
 Learn [vkguide](https://vkguide.dev/).
 
+![](misc/screenshot.png)
+
 ## Build
 
 Install [Vulkan SDK](https://vulkan.lunarg.com/) and [XMake](https://xmake.io/#/guide/installation) first.
