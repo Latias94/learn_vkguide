@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.h"
 #include "vk_descriptors.h"
 #include "vk_loader.h"
 #include "vk_types.h"
@@ -258,4 +259,6 @@ private:
     int                        currentBackgroundEffect{0};
 
     std::vector<std::shared_ptr<MeshAsset>> testMeshes;
+
+    Camera mainCamera;
 };
