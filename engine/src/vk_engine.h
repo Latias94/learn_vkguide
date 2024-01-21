@@ -49,9 +49,9 @@ struct RenderObject
     VkBuffer indexBuffer;
 
     MaterialInstance* material;
-
-    glm::mat4       transform;
-    VkDeviceAddress vertexBufferAddress;
+    Bounds            bounds;
+    glm::mat4         transform;
+    VkDeviceAddress   vertexBufferAddress;
 };
 
 struct DrawContext

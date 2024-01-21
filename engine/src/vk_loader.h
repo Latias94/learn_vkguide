@@ -10,10 +10,20 @@ struct GLTFMaterial
     MaterialInstance data;
 };
 
+struct Bounds
+{
+    glm::vec3 origin;
+    // The sphere radius can be used in case we want to use other frustum culling algorithms and has
+    // other uses.
+    float     sphereRadius;
+    glm::vec3 extents;
+};
+
 struct GeoSurface
 {
     uint32_t                      startIndex;
     uint32_t                      count;
+    Bounds                        bounds;
     std::shared_ptr<GLTFMaterial> material;
 };
 
