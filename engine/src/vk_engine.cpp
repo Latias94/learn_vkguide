@@ -625,7 +625,7 @@ void VulkanEngine::run()
 
         // imgui new frame
         ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplSDL2_NewFrame(_window);
+        ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
         // ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
@@ -990,11 +990,10 @@ void VulkanEngine::init_imgui()
     init_info.MinImageCount             = 3;
     init_info.ImageCount                = 3;
     init_info.UseDynamicRendering       = true;
-    init_info.ColorAttachmentFormat     = _swapchainImageFormat;
 
     init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
+    ImGui_ImplVulkan_Init(&init_info);
 
     // execute a gpu command to upload imgui font textures
     ImGui_ImplVulkan_CreateFontsTexture();
